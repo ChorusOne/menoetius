@@ -4,20 +4,19 @@
     Useful when firewall restrictions prohibit a pull-based methodlogy but you
     wish to harness the awesomeness of Prometheusself.
 
-    Version: 0.1.0
-
-    TODO: add support for labels.
-    TODO: allow support for custom hostnames (i.e. not localhost); metrics can
-          currently be fetched from alternate hostnames, but will not be
-          reflected as such in Prometheus itself.
+    Version: 0.2.0
 '''
 
 import time
 import threading
 import logging
 import signal
+import re
+import socket
 import yaml
 import requests
+from functools import reduce
+
 
 
 class Configurator:
@@ -52,6 +51,7 @@ class Controller:
         self.request_timeout = config.get('request_timeout', 5)
         for endpoint in config.get('endpoints'):
             self.create_endpoint(endpoint)
+        self.help_overrides = config.get('help_overrides', {})
 
     def create_endpoint(self, endpoint_config):
         '''  Create an endpoint data structure from config '''
@@ -60,7 +60,9 @@ class Controller:
                             endpoint_config.get('host', 'localhost'),
                             endpoint_config.get('port', 9100),
                             endpoint_config.get('path', '/metrics'),
-                            endpoint_config.get('interval', 30)
+                            endpoint_config.get('interval', 30),
+                            instance=endpoint_config.get('hostname', socket.getfqdn()),
+                            labels=endpoint_config.get('labels', {})
                             )
         logging.debug('Created endpoint {} as {}'.format(endpoint.get_name(),
                                                          endpoint.get_url()))
@@ -79,13 +81,13 @@ class Controller:
             for endpoint in self.endpoints:
                 if current_time >= endpoint.get_nextscrape() and (not threads.get(endpoint.get_name(), False) or not threads.get(endpoint.get_name()).is_alive()):
                     logging.debug('Spawning thread for {}'.format(endpoint.get_name()))
-                    request_thread = threading.Thread(target=self.do_request, name=("requestthread-{}".format(endpoint.get_name())), args=(endpoint.get_url(), endpoint.get_name(), endpoint.get_labels()))
+                    request_thread = threading.Thread(target=self.do_request, name=("requestthread-{}".format(endpoint.get_name())), args=(endpoint.get_url(), endpoint.get_name(), endpoint.get_instance(), endpoint.get_labelstring()))
                     threads.update({endpoint.get_name(): request_thread})
                     request_thread.start()
                     endpoint.update_nextscrape()
             time.sleep(1)
 
-    def do_request(self, uri, job, labels):
+    def do_request(self, uri, job, instance, label_string):
         ''' Handle scraping and pushing requests; executed as a separate thread. '''
         logging.debug("Making request to {}\n".format(uri))
         try:
@@ -95,8 +97,11 @@ class Controller:
             logging.error("Unable to query metrics from: {}".format(uri))
             return
         try:
-            send_request = requests.post("{}/metrics/jobs/{}".format(self.gateway, job), data=metrics.text, timeout=self.request_timeout)
-            logging.info('Metrics pushed for {}'.format(uri))
+            text = metrics.text
+            for override_name, override_value in self.help_overrides.items():
+                text = re.sub(r"# HELP {}.+\n".format(override_name), "# HELP {} {}\n".format(override_name, override_value), text)
+            send_request = requests.post("{}/metrics/job/{}/instance/{}{}".format(self.gateway, job, instance, label_string), data=text, timeout=self.request_timeout)
+            logging.info('Metrics pushed for {} to {}'.format(uri, "{}/metrics/job/{}/instance/{}{}".format(self.gateway, job, instance, label_string)))
         except requests.exceptions.ConnectionError as exc:
             logging.error("Unable to send metrics for: {}".format(uri))
 
@@ -104,14 +109,15 @@ class Controller:
 class Endpoint:
     ''' Endpoint data structure. '''
 
-    def __init__(self, name, scheme, host, port, path, interval):
+    def __init__(self, name, scheme, host, port, path, interval, **kwargs):
         self.name = name
         self.scheme = scheme
         self.host = host
         self.port = port
         self.path = path
         self.interval = interval
-        self.labels = []
+        self.labels = kwargs.get('labels', {})
+        self.instance = kwargs.get('instance', socket.getfqdn())
         self.nextscrape = time.time()
 
     def get_name(self):
@@ -129,6 +135,14 @@ class Endpoint:
     def get_labels(self):
         ''' Return any labels associated with this endpoint. '''
         return self.labels
+
+    def get_labelstring(self):
+        ''' Return labels for this endpoint as a url path. '''
+        return reduce(lambda x, y : '/'.join([x,y,self.labels[y]]), self.labels, '')
+
+    def get_instance(self):
+        ''' Return the instance name for this push. '''
+        return self.instance
 
     def get_nextscrape(self):
         ''' Return the time at which the endpoint should next be scraped. '''

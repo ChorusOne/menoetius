@@ -10,3 +10,9 @@ endpoints:
     port: 9100
     path: /metrics
     interval: 5
+    hostname: host.domain.com
+    labels:
+      arbitrary_label: foo
+      other_label: bar
+help_overrides:
+  - go_memstats_sys_bytes: Number of bytes obtained by system.
