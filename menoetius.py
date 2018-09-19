@@ -2,7 +2,7 @@
 ''' Menoetius (Ancient Greek: Brother of Prometheus) to scrape endpoints and
     push to a pushgateway.
     Useful when firewall restrictions prohibit a pull-based methodlogy but you
-    wish to harness the awesomeness of Prometheusself.
+    wish to harness the awesomeness of Prometheus.
 
     Version: 0.2.0
 '''
