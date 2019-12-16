@@ -1,5 +1,5 @@
 # Menoetius
-## Version: 0.2.0
+## Version: 0.2.1
 
 ### What is Menoetius
 
@@ -31,7 +31,7 @@ The follow these simple instructions:
 * Run `python3 ./menoetius.py` (or run as a service, see 'Running Menoetius as a service' section below)
 
 ### Configuration
-Menoetius has a small number of configurable items, all of which can be configured by way of a YAML file in the application root.
+Menoetius has a small number of configurable items, all of which can be configured by way of a YAML file in the application root; or a path of your choosing using the `MENOETIUS_CONFIG_PATH` environment variable.
 
 Example configuration:
 ```
