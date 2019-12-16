@@ -1,0 +1,7 @@
+version: '3.4'
+services:
+    menoetius:
+      image: 176395444877.dkr.ecr.us-east-1.amazonaws.com/chorusone/menoetius:latest
+      build:
+        context: .
+      

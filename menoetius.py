@@ -4,7 +4,7 @@
     Useful when firewall restrictions prohibit a pull-based methodlogy but you
     wish to harness the awesomeness of Prometheus.
 
-    Version: 0.2.0
+    Version: 0.2.1
 '''
 
 import time
@@ -12,6 +12,7 @@ import threading
 import logging
 import signal
 import re
+import os
 import socket
 from functools import reduce
 import yaml
@@ -22,8 +23,9 @@ import requests
 class Configurator:
     ''' Handle loading of configuration file'''
 
-    def __init__(self, filepath="./config.yaml"):
-        self.filepath = filepath
+    def __init__(self):
+        self.filepath = os.getenv("MENOETIUS_CONFIG_PATH", './config.yaml')
+        print("Loading configuration file: {}".format(self.filepath))
         self.config = {}
         self.load()
 
