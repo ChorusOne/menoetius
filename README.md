@@ -151,6 +151,7 @@ Create a text file at `/etc/systemd/system/menoetius.service`, and paste in the 
 Description=menoetius
 After=syslog.target network.target
 [Service]
+
 Type=simple
 RemainAfterExit=no
 WorkingDirectory=/srv/menoetius
@@ -162,4 +163,5 @@ ExecStart=/usr/bin/python3 /srv/menoetius/menoetius.py
 WantedBy=multi-user.target
 ```
 
-The command `sudo systemctl menoetius enabled` and `sudo systemctl menoetius start` will enable the service at boot, and start the service running respectively.
+The command `sudo systemctl enable menoetius.service` and `sudo systemctl start menoetius.service` will
+enable the service at boot, and start the service running respectively.
