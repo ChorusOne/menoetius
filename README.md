@@ -26,7 +26,7 @@ Install, using your operating system's package manager, `python3` and `pip3-pyth
 The follow these simple instructions:
 
 1. Clone the contents of this repository (into `/srv/menoetius`, for example). This will be referred to herein as the 'application root'.
-* From your application root, run `pip3 install -r requirements.txt`
+* From your application root, run `pip3 install -r requirements.txt` or install deps via your distribution package manager, for example `apt install python3-requests python3-yaml`
 * Create `config.yaml` file in the application root (see 'Configuration' section below)
 * Run `python3 ./menoetius.py` (or run as a service, see 'Running Menoetius as a service' section below)
 
