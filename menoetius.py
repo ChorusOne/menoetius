@@ -4,7 +4,7 @@
     Useful when firewall restrictions prohibit a pull-based methodlogy but you
     wish to harness the awesomeness of Prometheus.
 
-    Version: 0.2.1
+    Version: 0.3.0
 '''
 
 import time
@@ -49,7 +49,7 @@ class Controller:
     exiting = False
 
     def __init__(self, config):
-        self.gateway = config.get('gateway')
+        self.gateways = config.get('gateways', [config.get('gateway', "")])
         self.request_timeout = config.get('request_timeout', 5)
         for endpoint in config.get('endpoints'):
             self.create_endpoint(endpoint)
@@ -116,14 +116,15 @@ class Controller:
                               "# HELP {} {}\n".format(override_name, override_value),
                               text
                              )
-            post_uri = "{}/metrics/job/{}/instance/{}{}".format(self.gateway,
+            for gateway in self.gateways:
+              post_uri = "{}/metrics/job/{}/instance/{}{}".format(gateway,
                                                                 job,
                                                                 instance,
                                                                 label_string)
-            requests.post(post_uri,
+              requests.post(post_uri,
                           data=text,
                           timeout=self.request_timeout)
-            logging.info('Metrics pushed for %s to %s', uri, post_uri)
+              logging.info('Metrics pushed for %s to %s', uri, post_uri)
         except requests.exceptions.ConnectionError as exc:
             logging.error("Unable to send metrics for: %s", uri)
 

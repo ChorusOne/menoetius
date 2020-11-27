@@ -1,5 +1,5 @@
 # Menoetius
-## Version: 0.2.1
+## Version: 0.3.0
 
 ### What is Menoetius
 
@@ -35,7 +35,8 @@ Menoetius has a small number of configurable items, all of which can be configur
 
 Example configuration:
 ```
-gateway: http://prometheus.example.com:9091
+gateways:
+- http://prometheus.example.com:9091
 log_level: info
 log_format: "%(asctime)-15s [%(levelname)s] (%(threadName)-10s) %(message)s"
 log_file: menoetius.log
@@ -58,7 +59,7 @@ help_overrides:
 #### gateway
 **(no default; REQUIRED)**
 
-This is the http(s) address of your Prometheus pushgateway, that you want Menoetius to push all metrics to.
+This is a list of http(s) addresses of your Prometheus pushgateway(s), that you want Menoetius to push all metrics to.
 
 #### log_level
 **(default: info)**
